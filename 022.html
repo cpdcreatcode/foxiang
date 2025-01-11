@@ -1,0 +1,286 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <title>온라인 예불</title>
+  <style>
+    /* 简单的重置 */
+    * {
+      margin: 0; 
+      padding: 0; 
+      box-sizing: border-box;
+      font-family: sans-serif;
+    }
+    body {
+      background: #f9f4ec; /* 温暖的背景色 */
+      color: #333;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      min-height: 100vh;
+    }
+    header {
+      margin: 20px 0;
+    }
+    h1 {
+      font-size: 2em;
+      color: #8b4513; /* 略带棕色调 */
+    }
+    main {
+      width: 90%;
+      max-width: 600px;
+      background: #fff;
+      border: 1px solid #ddd;
+      border-radius: 8px;
+      padding: 20px;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    }
+
+    /* 佛像图片显示区域 */
+    .image-container {
+      width: 100%;
+      height: 300px;
+      overflow: hidden;
+      text-align: center;
+      margin-bottom: 15px;
+    }
+    .image-container img {
+      max-width: 100%;
+      max-height: 100%;
+      object-fit: contain;
+    }
+
+    /* 上香 GIF 的样式 */
+    #incenseGif {
+      display: none; /* 默认隐藏 */
+      width: 120px; /* 扩大尺寸为原来的两倍 */
+      height: 240px;
+      margin: 20px auto; /* 居中并添加上边距 */
+    }
+
+    /* 佛像信息文本 */
+    .info {
+      text-align: center;
+      margin-bottom: 20px;
+    }
+    .info h2 {
+      font-size: 1.4em;
+      margin-bottom: 10px;
+      color: #5a2d0c; /* 更深的棕色 */
+    }
+    .info p {
+      font-size: 1em;
+      line-height: 1.4em;
+    }
+
+    /* 主按钮区域：上一佛 和 下一佛 */
+    .buttons {
+      display: flex;
+      justify-content: center;
+      gap: 10px;
+      margin-bottom: 20px;
+      flex-wrap: wrap;
+    }
+    /* 上香按钮区域（单独一行，居中） */
+    .buttons-secondary {
+      display: flex;
+      justify-content: center;
+      margin-bottom: 20px;
+    }
+    button {
+      cursor: pointer;
+      padding: 8px 16px;
+      font-size: 1em;
+      border-radius: 4px;
+      border: none;
+      background: #e2b15a;
+      color: #fff;
+      transition: background 0.3s;
+    }
+    button:hover {
+      background: #c9964f;
+    }
+
+    /* 祈愿输入 & 结果区域 */
+    .wish-section {
+      text-align: center;
+      margin-bottom: 20px;
+    }
+    .wish-section input {
+      width: 80%;
+      padding: 8px;
+      font-size: 1em;
+      margin-bottom: 10px;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+    }
+    .result-message {
+      margin: 10px 0;
+      color: #c24a4a; /* 强调色（红色系） */
+      font-weight: bold;
+    }
+
+    footer {
+      margin-top: auto;
+      padding: 10px 0;
+      font-size: 0.9em;
+      color: #999;
+    }
+
+    /* 响应式调整 */
+    @media (max-width: 600px) {
+      #incenseGif {
+        width: 90px; /* 调整为适合小屏幕的尺寸 */
+        height: 180px;
+      }
+    }
+
+  </style>
+</head>
+<body>
+
+  <!-- 头部 -->
+  <header>
+    <h1>온라인 예불</h1>
+  </header>
+
+  <!-- 主内容区域 -->
+  <main>
+    <!-- 佛像选择及显示区域 -->
+    <div class="image-container">
+      <img id="buddhaImage" src="" alt="불상 이미지" />
+    </div>
+
+    <div class="info">
+      <h2 id="buddhaName">불상 이름</h2>
+      <p id="buddhaDesc">불상의 설명 또는 가피 내용</p>
+    </div>
+
+    <!-- 上香 GIF 动画（默认隐藏） -->
+    <img id="incenseGif" src="https://raw.githubusercontent.com/cpdcreatcode/foxiang/main/06.gif" alt="上香动画" />
+
+    <!-- 主按钮区域：上一佛 和 下一佛 -->
+    <div class="buttons">
+      <button id="prevBtn">◀ 이전 불상</button>
+      <button id="nextBtn">다음 불상 ▶</button>
+    </div>
+
+    <!-- 上香按钮区域（单独一行，居中） -->
+    <div class="buttons-secondary">
+      <button id="incenseBtn">상향하기</button>
+    </div>
+
+    <!-- 祈愿输入及结果 -->
+    <div class="wish-section">
+      <input type="text" id="wishInput" placeholder="소원을 입력하세요" />
+      <br />
+      <button id="wishBtn">소원 빌기</button>
+      <div id="resultMessage" class="result-message"></div>
+    </div>
+  </main>
+
+  <!-- 页脚 -->
+  <footer>
+    © 2025 온라인 예불. All rights reserved.
+  </footer>
+
+  <script>
+    // 佛像数据数组
+    const buddhas = [
+      {
+        img: "https://raw.githubusercontent.com/cpdcreatcode/foxiang/main/01.jpg",
+        name: "아미타불",
+        desc: "극락세계로 인도하는 자비의 부처님. 무량한 복덕과 안락을 베풉니다."
+      },
+      {
+        img: "https://raw.githubusercontent.com/cpdcreatcode/foxiang/main/03.jpg",
+        name: "관세음보살",
+        desc: "모든 중생의 고통을 구제하는 대자대비의 보살. 어려움 속에서도 희망을 줍니다."
+      },
+      {
+        img: "https://raw.githubusercontent.com/cpdcreatcode/foxiang/main/04.jpeg",
+        name: "지장보살",
+        desc: "어둠 속의 중생을 구제하며, 운명을 밝히고 장수와 평안을 보살핍니다."
+      },
+      {
+        img: "https://raw.githubusercontent.com/cpdcreatcode/foxiang/main/05.jpg",
+        name: "재물신",
+        desc: "재물을 관장하여 풍요와 번영을 가져다주는 신령. 사업과 금전운을 돕습니다."
+      },
+      {
+        img: "https://raw.githubusercontent.com/cpdcreatcode/foxiang/main/02.jpeg",
+        name: "약사불",
+        desc: "병고를 치유하고 건강과 장수를 지켜주는 부처님. 몸과 마음을 치유해줍니다."
+      }
+    ];
+
+    let currentIndex = 0;
+
+    const buddhaImage = document.getElementById("buddhaImage");
+    const buddhaName = document.getElementById("buddhaName");
+    const buddhaDesc = document.getElementById("buddhaDesc");
+
+    const prevBtn = document.getElementById("prevBtn");
+    const nextBtn = document.getElementById("nextBtn");
+
+    const incenseBtn = document.getElementById("incenseBtn");
+    const incenseGif = document.getElementById("incenseGif");
+
+    const wishInput = document.getElementById("wishInput");
+    const wishBtn = document.getElementById("wishBtn");
+    const resultMessage = document.getElementById("resultMessage");
+
+    // 加载佛像函数
+    function loadBuddha(index) {
+      buddhaImage.src = buddhas[index].img;
+      buddhaName.textContent = buddhas[index].name;
+      buddhaDesc.textContent = buddhas[index].desc;
+    }
+
+    // 上一佛按钮事件
+    prevBtn.addEventListener("click", () => {
+      currentIndex--;
+      if (currentIndex < 0) {
+        currentIndex = buddhas.length - 1;
+      }
+      loadBuddha(currentIndex);
+    });
+
+    // 下一佛按钮事件
+    nextBtn.addEventListener("click", () => {
+      currentIndex++;
+      if (currentIndex >= buddhas.length) {
+        currentIndex = 0;
+      }
+      loadBuddha(currentIndex);
+    });
+
+    // 上香按钮事件
+    incenseBtn.addEventListener("click", () => {
+      console.log("上香按钮被点击");
+      incenseGif.style.display = "block"; // 显示 GIF 动画
+
+      // 3 秒后隐藏 GIF 动画
+      setTimeout(() => {
+        incenseGif.style.display = "none";
+      }, 3000);
+    });
+
+    // 祈愿按钮事件
+    wishBtn.addEventListener("click", () => {
+      const wishText = wishInput.value.trim();
+      if (wishText.length > 0) {
+        resultMessage.textContent = "소원이 접수되었습니다. 부처님의 가피가 함께 하길 바랍니다.";
+        wishInput.value = ""; // 清空输入框
+      } else {
+        resultMessage.textContent = "소원을 입력해 주세요.";
+      }
+    });
+
+    // 页面加载时初始化
+    window.onload = () => {
+      loadBuddha(currentIndex);
+    };
+  </script>
+</body>
+</html>
